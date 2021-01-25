@@ -1,1 +1,5 @@
-/node_modules
+/back/node_modules
+/back/.vscode
+/library-frontend/node_modules
+/library-frontend/.vscode
+/.vscode
