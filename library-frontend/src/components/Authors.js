@@ -5,10 +5,10 @@ import { ALL_AUTHORS } from '../queries'
 
 
 const Authors = (props) => {
+
   const authorResult = useQuery(ALL_AUTHORS)
   const authors = authorResult.loading ? [] : authorResult.data.allAuthors
 
-  
   if (!props.show) {
     return null
   }
