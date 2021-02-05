@@ -3,3 +3,4 @@
 /library-frontend/node_modules
 /library-frontend/.vscode
 /.vscode
+/back/local_config.json
