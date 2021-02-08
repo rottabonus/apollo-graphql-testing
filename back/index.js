@@ -58,7 +58,7 @@ const resolvers = {
   Query: {
       authorCount: () => Author.collection.countDocuments(),
       bookCount: () => Book.collection.countDocuments(),
-      allBooks: (root, args) => {
+      allBooks: async (root, args) => {
         if(!args){
           return authors
         }
@@ -66,9 +66,21 @@ const resolvers = {
         const byGenre = (book) => args.genre ? book.genres.includes(args.genre) : []
         const byAuthor = (book) => args.author ? book.author === args.author : []
         return books.filter(b => byGenre(b) && byAuthor(b))*/
-        return Book.find({})
+        return await Book.find({})
       },
-      allAuthors: (root, args) => Author.find({})
+      allAuthors: async (root, args) => {
+        const allAuthors = await Author.find({})
+        const allBooks = await Book.find({})
+        const mapped = allAuthors.map(a => {
+          const bookCount = allBooks.filter(b => b.author.toString() === a.id.toString()).length
+          return {
+            name: a.name,
+            born: a.born,
+            bookCount: bookCount
+          }
+        })
+        return mapped
+     }
   },
   Mutation: {
     addBook: async (root, args) => {
@@ -97,7 +109,7 @@ const resolvers = {
       return book
     },
     editAuthor: async (root, args) => {
-      const oldAuthor = await Author.findOne({name: args.name})
+      const oldAuthor = await Author.findOne({ name: args.name })
       if(!oldAuthor){
         return null
       }
