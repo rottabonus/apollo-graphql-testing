@@ -1,5 +1,5 @@
 const config =  require('./local_config.json')
-const { ApolloServer, gql } = require('apollo-server')
+const { ApolloServer, gql, ApolloError, UserInputError } = require('apollo-server')
 const mongoose = require('mongoose')
 const Author = require('./models/author')
 const Book = require('./models/book')
@@ -53,6 +53,14 @@ type Mutation {
   ): Author
 }`
 
+function isValidAuthorName(author){
+  return typeof author === 'string' && author.length >= 4
+}
+
+function isValidBookTitle(title){
+  return typeof title === 'string' && title.length >= 2
+}
+
 
 const resolvers = {
   Query: {
@@ -60,13 +68,14 @@ const resolvers = {
       bookCount: () => Book.collection.countDocuments(),
       allBooks: async (root, args) => {
         if(!args){
-          return authors
+          return await Book.find({})
         }
         /*
         const byGenre = (book) => args.genre ? book.genres.includes(args.genre) : []
         const byAuthor = (book) => args.author ? book.author === args.author : []
         return books.filter(b => byGenre(b) && byAuthor(b))*/
-        return await Book.find({})
+
+        return await Book.find({ genres: { $in: [args.genre] } })
       },
       allAuthors: async (root, args) => {
         const allAuthors = await Author.find({})
@@ -76,7 +85,7 @@ const resolvers = {
           return {
             name: a.name,
             born: a.born,
-            bookCount: bookCount
+            bookCount
           }
         })
         return mapped
@@ -84,37 +93,56 @@ const resolvers = {
   },
   Mutation: {
     addBook: async (root, args) => {
+      const validationErrors = {}
       let author = await Author.findOne({ name: args.author })
 
       if(!author){
         author = new Author({ name: args.author })
+        if (!isValidAuthorName(args.author)) {
+          validationErrors.author = 'This is not a valid author name'
+        }
+        if (Object.keys(validationErrors).length > 0) {
+          throw new UserInputError(
+          'Failed to add author due to validation errors',
+          { validationErrors }
+        )
+      }
         try {
           await author.save()
         } catch (error) {
-          throw new UserInputError(error.message, {
+          throw new ApolloError(error.message, {
             invalidArgs: args
           })
         }
       }
 
       const book = new Book({ ...args, author })
-      
+      if (!isValidBookTitle(args.title)) {
+        validationErrors.title = 'This is not a valid book title'
+      }
+      if (Object.keys(validationErrors).length > 0) {
+        throw new UserInputError(
+        'Failed to add a book due to validation errors',
+        { validationErrors }
+      )
+    }
       try {
         await book.save()
       } catch(error) {
-        throw new UserInputError(error.message, {
+        throw new ApolloError(error.message, {
           invalidArgs: args
         })
       }
       return book
     },
+
     editAuthor: async (root, args) => {
-      const oldAuthor = await Author.findOne({ name: args.name })
-      if(!oldAuthor){
+      let author = await Author.findOne({ name: args.name })
+      if(!author){
         return null
       }
-      const updatedAuthor = {...oldAuthor, born: args.setBorn}
-      return updatedAuthor.save()
+      author.born = args.setBorn
+      return author.save()
     }
   }
 }
