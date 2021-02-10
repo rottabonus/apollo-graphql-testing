@@ -1,8 +1,12 @@
 const config =  require('./local_config.json')
-const { ApolloServer, gql, ApolloError, UserInputError } = require('apollo-server')
+const bcrypt = require('bcrypt')
+const { ApolloServer, ApolloError, UserInputError } = require('apollo-server')
 const mongoose = require('mongoose')
 const Author = require('./models/author')
 const Book = require('./models/book')
+const User = require('./models/user')
+const { typeDefs } =  require('./models/typedefs')
+const validation = require('./validation')
 
 const MONGODB_URI = `mongodb+srv://${config.db_user}:${config.db_password}@zordbase.mvald.mongodb.net/${config.db_name}?retryWrites=true&w=majority`
 
@@ -16,50 +20,6 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true,
     console.log('error connection to MongoDB:', error.message)
   })
 
-
-const typeDefs = gql`
-  type Query {
-      authorCount: Int!
-      bookCount: Int!
-      allBooks(author: String, genre: String): [Book!]!
-      allAuthors: [Author!]!
-  }
-  
-  type Book {
-    title: String!
-    published: Int!
-    author: Author!
-    genres: [String!]!
-    id: ID!
-}
-
-  type Author {
-    name: String!
-    born: Int
-    id: ID!
-    bookCount: Int!
-}
-
-type Mutation {
-  addBook(
-    title: String!,
-    published: Int!
-    author: String!
-    genres: [String!]!
-  ): Book
-  editAuthor(
-    name: String!,
-    setBorn: Int!
-  ): Author
-}`
-
-function isValidAuthorName(author){
-  return typeof author === 'string' && author.length >= 4
-}
-
-function isValidBookTitle(title){
-  return typeof title === 'string' && title.length >= 2
-}
 
 
 const resolvers = {
@@ -98,7 +58,7 @@ const resolvers = {
 
       if(!author){
         author = new Author({ name: args.author })
-        if (!isValidAuthorName(args.author)) {
+        if (!validation.isValidAuthorName(args.author)) {
           validationErrors.author = 'This is not a valid author name'
         }
         if (Object.keys(validationErrors).length > 0) {
@@ -117,7 +77,7 @@ const resolvers = {
       }
 
       const book = new Book({ ...args, author })
-      if (!isValidBookTitle(args.title)) {
+      if (!validation.isValidBookTitle(args.title)) {
         validationErrors.title = 'This is not a valid book title'
       }
       if (Object.keys(validationErrors).length > 0) {
@@ -143,7 +103,22 @@ const resolvers = {
       }
       author.born = args.setBorn
       return author.save()
+    },
+
+    createUser: async (root, args) => {
+      const saltRounds = 10
+      const passwordHash = await bcrypt.hash(args.password, saltRounds)
+      const user = new User({ ...args, passwordHash })
+      try {
+        await user.save()
+      } catch(error) {
+        throw new ApolloError(error.message, {
+          invalidArgs: args
+        })
+      }
+      return user
     }
+    
   }
 }
 
