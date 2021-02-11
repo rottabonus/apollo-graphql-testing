@@ -1,4 +1,5 @@
 const config =  require('./local_config.json')
+const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
 const { ApolloServer, ApolloError, UserInputError } = require('apollo-server')
 const mongoose = require('mongoose')
@@ -27,7 +28,8 @@ const resolvers = {
       authorCount: () => Author.collection.countDocuments(),
       bookCount: () => Book.collection.countDocuments(),
       allBooks: async (root, args) => {
-        if(!args){
+        
+        if(Object.keys(args).length === 0){
           return await Book.find({})
         }
         /*
@@ -49,6 +51,10 @@ const resolvers = {
           }
         })
         return mapped
+     },
+
+     me: (root, args, context) => {
+       return context.currentUser
      }
   },
   Mutation: {
@@ -117,7 +123,24 @@ const resolvers = {
         })
       }
       return user
+    },
+
+    login: async (root, args) => {
+      const user = await User.findOne({ username: args.username})
+      const correctPassword = user === null ? false : await bcrypt.compare(args.password, user.passwordHash)
+      
+      if(!(user && correctPassword)){
+        throw new UserInputError('wrong credentials')
+      }
+
+      const userForToken = {
+        username: user.username,
+        id: user._id
+      }
+
+      return { value: jwt.sign(userForToken, config.jwt_sign_secret) }
     }
+    
     
   }
 }
@@ -125,6 +148,14 @@ const resolvers = {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  context: async ({ req }) => {
+    const auth = req ? req.headers.authorization : null
+    if (auth && auth.toLowerCase().startsWith('bearer ')) {
+      const decodedToken = jwt.verify(auth.substring(7), config.jwt_sign_secret)
+      const currentUser = await User.findById(decodedToken.id)
+      return { currentUser }
+    }
+  }
 })
 
 server.listen().then(({ url }) => {
