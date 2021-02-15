@@ -1,7 +1,7 @@
 const config =  require('./local_config.json')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcrypt')
-const { ApolloServer, ApolloError, UserInputError } = require('apollo-server')
+const { ApolloServer, ApolloError, UserInputError, AuthenticationError } = require('apollo-server')
 const mongoose = require('mongoose')
 const Author = require('./models/author')
 const Book = require('./models/book')
@@ -58,7 +58,11 @@ const resolvers = {
      }
   },
   Mutation: {
-    addBook: async (root, args) => {
+    addBook: async (root, args, context) => {
+      const user = context.currentUser
+      if(!user){
+        throw new AuthenticationError('Not authenticated')
+      }
       const validationErrors = {}
       let author = await Author.findOne({ name: args.author })
 
@@ -102,7 +106,13 @@ const resolvers = {
       return book
     },
 
-    editAuthor: async (root, args) => {
+    editAuthor: async (root, args, context) => {
+
+      const user = context.currentUser 
+      if(!user){
+        throw new AuthenticationError('Not authenticated')
+      }
+
       let author = await Author.findOne({ name: args.name })
       if(!author){
         return null
@@ -140,8 +150,6 @@ const resolvers = {
 
       return { value: jwt.sign(userForToken, config.jwt_sign_secret) }
     }
-    
-    
   }
 }
 

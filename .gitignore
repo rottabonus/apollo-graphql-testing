@@ -4,3 +4,4 @@
 /library-frontend/.vscode
 /.vscode
 /back/local_config.json
+/back/.env
