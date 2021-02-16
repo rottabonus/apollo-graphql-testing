@@ -28,25 +28,37 @@ const resolvers = {
       authorCount: () => Author.collection.countDocuments(),
       bookCount: () => Book.collection.countDocuments(),
       allBooks: async (root, args) => {
+
+        const allAuthors = await resolvers.Query.allAuthors()
         
         if(Object.keys(args).length === 0){
-          return await Book.find({})
+          const books = await Book.find({})
+          const mapped = books.map(b => {
+            return {
+              ...b._doc, 
+              author: allAuthors.find(a => a._id.toString() === b.author.toString())}
+          })
+          return mapped
         }
         /*
         const byGenre = (book) => args.genre ? book.genres.includes(args.genre) : []
         const byAuthor = (book) => args.author ? book.author === args.author : []
         return books.filter(b => byGenre(b) && byAuthor(b))*/
-
-        return await Book.find({ genres: { $in: [args.genre] } })
+        const books = await Book.find({ genres: { $in: [args.genre] } })
+        const mapped = books.map(b => {
+          return {
+            ...b._doc, 
+            author: allAuthors.find(a => a._id.toString() === b.author.toString())}
+        })
+        return mapped
       },
       allAuthors: async (root, args) => {
         const allAuthors = await Author.find({})
         const allBooks = await Book.find({})
         const mapped = allAuthors.map(a => {
-          const bookCount = allBooks.filter(b => b.author.toString() === a.id.toString()).length
+        const bookCount = allBooks.filter(b => b.author.toString() === a.id.toString()).length
           return {
-            name: a.name,
-            born: a.born,
+            ...a._doc,
             bookCount
           }
         })
