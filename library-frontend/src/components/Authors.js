@@ -8,8 +8,8 @@ const Authors = (props) => {
 
   const authorResult = useQuery(ALL_AUTHORS)
   const authors = authorResult.loading ? [] : authorResult.data.allAuthors
-  const [year, setYear] = useState(null)
-  const [selectedAuthor, setSelectedAuthor] = useState(null)
+  const [year, setYear] = useState('')
+  const [selectedAuthor, setSelectedAuthor] = useState('')
   const [ setBorn ] = useMutation(SET_BORN, {
     refetchQueries: [ { query: ALL_AUTHORS} ]
   })
@@ -31,7 +31,7 @@ const Authors = (props) => {
         setBorn: year, 
       }
      })
-    setYear(null)
+    setYear('')
   }
 
 
@@ -67,12 +67,16 @@ const Authors = (props) => {
           <h2>Set birthyear</h2>
           <span>Author</span>
           <select onChange={(e) => onAuthorChange(e)}>
-            {authors.map(a => {
-              return(
-              <option key={a.name} value={a.name}>
+            <option 
+             value=''>
+              select
+            </option>
+            {authors.map(a => 
+              <option 
+               key={a.name} 
+               value={a.name}>
                 {a.name}
               </option>
-              )}
             )}
           </select>
           <div>
