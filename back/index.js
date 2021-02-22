@@ -130,7 +130,16 @@ const resolvers = {
         return null
       }
       author.born = args.setBorn
-      return author.save()
+      try {
+        await author.save()
+      } catch(error) {
+        throw new ApolloError(error.message, {
+          invalidArgs: args
+        })
+      }
+      const books = await Book.find({ author: author._id })
+      author.bookCount = books.length
+      return author
     },
 
     createUser: async (root, args) => {
