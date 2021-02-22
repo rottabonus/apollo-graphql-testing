@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react'
 import { LOGIN } from '../queries'
 import { useMutation } from '@apollo/client'
+import { Notify } from './Notify'
 
 
 const Login = (props) => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState(null)
 
 
   const [ login, result ] = useMutation(LOGIN, {
-      onError: (error) => console.log(error)
+      onError: (error) => setError(error.graphQLErrors[0].message)
   })
 
   const submit = async (event) => {
@@ -32,7 +34,7 @@ const Login = (props) => {
         props.setToken(token)
         localStorage.setItem('token', token)
     }
-  },[result]) 
+  },[result]) //eslint-disable-line
 
   return (
     <div>
@@ -52,6 +54,7 @@ const Login = (props) => {
           />
         </div>
         <button type='submit'>login</button>
+        <Notify errorMessage={error}/>
       </form>
     </div>
   )

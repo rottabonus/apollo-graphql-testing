@@ -39,7 +39,9 @@ mutation addBook(
     ) {
       title
       published
-      author
+      author {
+        name
+      }
       genres
       id
    }

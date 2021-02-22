@@ -2,15 +2,17 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation } from '@apollo/client'
 import { ALL_AUTHORS, SET_BORN } from '../queries'
-
+import { Notify } from './Notify'
 
 const Authors = (props) => {
 
   const authorResult = useQuery(ALL_AUTHORS)
   const authors = authorResult.loading ? [] : authorResult.data.allAuthors
   const [year, setYear] = useState('')
+  const [error, setError] = useState(null)
   const [selectedAuthor, setSelectedAuthor] = useState('')
   const [ setBorn ] = useMutation(SET_BORN, {
+    onError: (error) => setError(error.graphQLErrors[0].message),
     refetchQueries: [ { query: ALL_AUTHORS} ]
   })
 
@@ -92,6 +94,7 @@ const Authors = (props) => {
             <button onClick={(e) => changeBornEvent(e)}>
               Set
             </button>
+            <Notify errorMessage={error} />
           </div>
         </div>
     </div>
