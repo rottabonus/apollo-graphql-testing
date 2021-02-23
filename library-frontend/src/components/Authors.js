@@ -40,32 +40,11 @@ const Authors = (props) => {
   if (!props.show) {
     return null
   }
-  
 
-  return (
-    <div>
-      <h2>authors</h2>
-      <table>
-        <tbody>
-          <tr>
-            <th></th>
-            <th>
-              born
-            </th>
-            <th>
-              books
-            </th>
-          </tr>
-          {authors.map(a =>
-            <tr key={a.name}>
-              <td>{a.name}</td>
-              <td>{a.born}</td>
-              <td>{a.bookCount}</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-        <div>
+
+  const SetBornForm = () => 
+     props.loggedIn ? 
+      <div>
           <h2>Set birthyear</h2>
           <span>Author</span>
           <select onChange={(e) => onAuthorChange(e)}>
@@ -97,6 +76,33 @@ const Authors = (props) => {
             <Notify errorMessage={error} />
           </div>
         </div>
+     : null  
+  
+
+  return (
+    <div>
+      <h2>authors</h2>
+      <table>
+        <tbody>
+          <tr>
+            <th></th>
+            <th>
+              born
+            </th>
+            <th>
+              books
+            </th>
+          </tr>
+          {authors.map(a =>
+            <tr key={a.name}>
+              <td>{a.name}</td>
+              <td>{a.born}</td>
+              <td>{a.bookCount}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+        <SetBornForm />
     </div>
   )
 }

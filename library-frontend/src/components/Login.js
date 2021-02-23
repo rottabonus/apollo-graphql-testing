@@ -10,6 +10,11 @@ const Login = (props) => {
   const [error, setError] = useState(null)
 
 
+  if(!props.show){
+    return null
+  }
+
+
   const [ login, result ] = useMutation(LOGIN, {
       onError: (error) => setError(error.graphQLErrors[0].message)
   })
@@ -33,6 +38,7 @@ const Login = (props) => {
         const token = result.data.login.value
         props.setToken(token)
         localStorage.setItem('token', token)
+        props.setPage('books')
     }
   },[result]) //eslint-disable-line
 
