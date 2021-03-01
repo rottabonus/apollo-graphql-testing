@@ -77,3 +77,12 @@ mutation login(
     value
   }
 }`
+
+
+export const ME = gql`
+query { 
+  me {
+  username
+  favoriteGenre
+  }
+}`
