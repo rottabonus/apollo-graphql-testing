@@ -1,19 +1,32 @@
 import React, { useEffect, useState } from 'react'
-import { useQuery } from '@apollo/client'
+import { useLazyQuery, useQuery } from '@apollo/client'
 import { ALL_BOOKS } from '../queries'
 
 const Books = (props) => {
 
-  const booksResult = useQuery(ALL_BOOKS)
   const [filterGenre, setFilterGenre] = useState('all genres')
+  const [allGenres, setAllGenres] = useState([])
   const [books, setBooks] = useState([])
+  const booksResult = useQuery(ALL_BOOKS)
+  const [booksGenreQuery, { called, loading, data }] = useLazyQuery(ALL_BOOKS)
+  
 
   if (!props.show) {
     return null
   }
 
-  const allGenres = [...new Set(['all genres'].concat(books.map(b => b.genres).flat()))]
-  const booksToShow  = filterGenre === 'all genres' ? books : books.filter(b => b.genres.includes(filterGenre))
+  const getBooksByGenre = (genre) => {
+    if(genre === 'all genres'){
+      booksGenreQuery()
+    } else {
+      booksGenreQuery({
+        variables: {
+          genre: genre
+        }
+      })
+    }
+    setFilterGenre(genre)
+  }
 
   const pillStyle = {
     margin: '4px 2px', 
@@ -26,8 +39,15 @@ const Books = (props) => {
   useEffect(() => {
     if(!booksResult.loading){
       setBooks(booksResult.data.allBooks)
+      setAllGenres([...new Set(['all genres'].concat(booksResult.data.allBooks.map(b => b.genres).flat()))])
     }
   },[booksResult])
+
+  useEffect(() => {
+    if(!loading && called){
+      setBooks(data.allBooks)
+    }
+  },[data])
 
   return (
     <div>
@@ -46,7 +66,7 @@ const Books = (props) => {
               published
             </th>
           </tr>
-          {booksToShow.map(a =>
+          {books.map(a =>
             <tr key={a.title}>
               <td>{a.title}</td>
               <td>{a.author.name}</td>
@@ -60,7 +80,7 @@ const Books = (props) => {
             allGenres.map(genre => 
             <div
               style={{...pillStyle, backgroundColor: genre === filterGenre ? 'lightsalmon' : 'wheat'}}
-              onClick={() => setFilterGenre(genre)}
+              onClick={() => getBooksByGenre(genre)}
               key={genre}>
               {genre.toLowerCase()}
             </div>)
