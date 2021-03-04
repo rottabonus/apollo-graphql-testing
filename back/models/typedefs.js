@@ -35,6 +35,10 @@ type Author {
   bookCount: Int!
 }
 
+type Subscription {
+  bookAdded: Book!
+}
+
 type Mutation {
 addBook(
   title: String!,

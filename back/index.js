@@ -8,6 +8,9 @@ const Book = require('./models/book')
 const User = require('./models/user')
 const { typeDefs } =  require('./models/typedefs')
 const validation = require('./validation')
+const { PubSub } = require('apollo-server')
+
+const pubsub = new PubSub()
 
 const MONGODB_URI = `mongodb+srv://${config.db_user}:${config.db_password}@zordbase.mvald.mongodb.net/${config.db_name}?retryWrites=true&w=majority`
 
@@ -40,10 +43,7 @@ const resolvers = {
           })
           return mapped
         }
-        /*
-        const byGenre = (book) => args.genre ? book.genres.includes(args.genre) : []
-        const byAuthor = (book) => args.author ? book.author === args.author : []
-        return books.filter(b => byGenre(b) && byAuthor(b))*/
+       
         const books = await Book.find({ genres: { $in: [args.genre] } })
         const mapped = books.map(b => {
           return {
@@ -115,6 +115,8 @@ const resolvers = {
           invalidArgs: args
         })
       }
+
+      pubsub.publish('BOOK_ADDED', { bookAdded: book })
       return book
     },
 
@@ -171,6 +173,11 @@ const resolvers = {
 
       return { value: jwt.sign(userForToken, config.jwt_sign_secret) }
     }
+  },
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(['BOOK_ADDED'])
+    }
   }
 }
 
@@ -187,6 +194,7 @@ const server = new ApolloServer({
   }
 })
 
-server.listen().then(({ url }) => {
+server.listen().then(({ url, subscriptionsUrl }) => {
   console.log(`Server ready at ${url}`)
+  console.log(`Subscriptions ready at ${subscriptionsUrl}`)
 })
