@@ -5,11 +5,20 @@ import Books from './components/Books'
 import Login from './components/Login'
 import NewBook from './components/NewBook'
 import Recommend from './components/Recommend'
+import { useSubscription } from '@apollo/client'
+import { BOOK_ADDED } from './queries'
 
 
 const App = () => {
   const [page, setPage] = useState('authors')
   const [token, setToken] = useState(localStorage.getItem('token'))
+
+
+  useSubscription(BOOK_ADDED, {
+    onSubscriptionData: ({ onSubscriptionData }) => {
+      console.log(onSubscriptionData)
+    }
+  })
 
 
   const logOut = () => {
@@ -28,11 +37,11 @@ const App = () => {
           <button onClick={() => setPage('add')}>add book</button>
           <button onClick={logOut}>logout</button>
         </div>
-        <Recommend show={page === 'recommended'}/>
-        <Authors show={page === 'authors'} loggedIn={true}/>
+        <Recommend show={page === 'recommended'} />
+        <Authors show={page === 'authors'} loggedIn={true} />
         <Books show={page === 'books'} />
-        <NewBook show={page === 'add'}/>
-     </div>
+        <NewBook show={page === 'add'} />
+      </div>
     )
   }
 
@@ -44,13 +53,13 @@ const App = () => {
           <button onClick={() => setPage('books')}>books</button>
           <button onClick={() => setPage('login')}>login</button>
         </div>
-        <Login 
+        <Login
           show={page === 'login'}
           setPage={setPage}
-          setToken={setToken}/>
-        <Authors 
-         show={page === 'authors'} 
-         loggedIn={false} />
+          setToken={setToken} />
+        <Authors
+          show={page === 'authors'}
+          loggedIn={false} />
         <Books show={page === 'books'} />
       </div>
     )
@@ -59,9 +68,9 @@ const App = () => {
   return (
     <div>
       { token ?
-      <LoggedIn />
-      :
-      <NotLoggedIn/>
+        <LoggedIn />
+        :
+        <NotLoggedIn />
       }
     </div>
   )
