@@ -40,15 +40,6 @@ mutation addBook(
 ${BOOK_FRAGMENT}
 `
 
-export const BOOK_ADDED = gql`
-subscription {
-  bookAdded {
-    ...BookDetails
-  }
-}
-${BOOK_FRAGMENT}
-`
-
 
 export const ALL_AUTHORS = gql`
   query {
@@ -100,3 +91,11 @@ query {
 }
 `
 
+export const BOOK_ADDED = gql`
+subscription {
+  bookAdded {
+    ...BookDetails
+  }
+}
+${BOOK_FRAGMENT}
+`
